@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Mod Tracker</title>
+
+<style>
+body {
+margin: 0;
+font-family: Arial, sans-serif;
+background: #0b0f1a;
+color: #e6e6e6;
+}
+
+header {
+padding: 15px;
+background: #11182a;
+display: flex;
+justify-content: space-between;
+align-items: center;
+}
+
+header input {
+width: 300px;
+padding: 8px;
+border: none;
+border-radius: 5px;
+}
+
+.container {
+display: flex;
+height: calc(100vh - 60px);
+}
+
+.sidebar {
+width: 220px;
+background: #10182b;
+padding: 10px;
+overflow-y: auto;
+}
+
+.sidebar button {
+width: 100%;
+padding: 10px;
+margin-bottom: 8px;
+background: #1b2742;
+color: white;
+border: none;
+cursor: pointer;
+}
+
+.main {
+flex: 1;
+padding: 20px;
+overflow-y: auto;
+}
+
+.card {
+background: #141d33;
+padding: 10px;
+margin: 10px 0;
+border-radius: 6px;
+border-left: 3px solid #3b82f6;
+}
+
+.mod {
+background: #121a2e;
+padding: 10px;
+margin-top: 10px;
+border-radius: 5px;
+}
+
+.row {
+display: flex;
+gap: 10px;
+flex-wrap: wrap;
+}
+
+input, select {
+padding: 8px;
+margin: 5px 0;
+background: #0f1628;
+border: 1px solid #2a3555;
+color: white;
+}
+
+button.add {
+padding: 10px;
+background: #3b82f6;
+border: none;
+color: white;
+cursor: pointer;
+margin-top: 5px;
+}
+
+.small {
+font-size: 12px;
+opacity: 0.8;
+}
+</style>
+</head>
+
+<body>
+
+<header>
+<div>Mod Tracker</div>
+<input id="search" placeholder="Search mods or games" oninput="render()">
+</header>
+
+<div class="container">
+
+<div class="sidebar">
+<button onclick="addGame()">Add Game</button>
+<div id="gameList"></div>
+</div>
+
+<div class="main">
+<h2 id="title">Select a game</h2>
+
+<div class="row">
+<input id="modName" placeholder="Mod name">
+<input id="modLink" placeholder="Mod link">
+</div>
+
+<div class="row">
+<select id="modCategory">
+<option>Graphics</option>
+<option>Gameplay</option>
+<option>UI</option>
+<option>Performance</option>
+<option>Favorites</option>
+</select>
+
+<select id="modStatus">
+<option>Installed</option>
+<option>Wanted</option>
+<option>Broken</option>
+</select>
+</div>
+
+<input id="modNotes" placeholder="Notes">
+
+<button class="add" onclick="addMod()">Add Mod</button>
+
+<div id="mods"></div>
+</div>
+
+</div>
+
+<script>
+let data = JSON.parse(localStorage.getItem("modsData")) || {};
+let currentGame = null;
+
+function save() {
+localStorage.setItem("modsData", JSON.stringify(data));
+}
+
+function addGame() {
+let name = prompt("Game name");
+if (!name) return;
+
+if (!data[name]) data[name] = [];
+currentGame = name;
+render();
+}
+
+function setGame(name) {
+currentGame = name;
+render();
+}
+
+function addMod() {
+if (!currentGame) return;
+
+data[currentGame].push({
+name: modName.value,
+link: modLink.value,
+category: modCategory.value,
+status: modStatus.value,
+notes: modNotes.value
+});
+
+modName.value = "";
+modLink.value = "";
+modNotes.value = "";
+
+save();
+render();
+}
+
+function render() {
+let gameList = document.getElementById("gameList");
+let modsDiv = document.getElementById("mods");
+let search = document.getElementById("search").value.toLowerCase();
+
+gameList.innerHTML = "";
+modsDiv.innerHTML = "";
+
+for (let game in data) {
+let btn = document.createElement("button");
+btn.innerText = game;
+btn.onclick = () => setGame(game);
+gameList.appendChild(btn);
+}
+
+if (!currentGame) return;
+document.getElementById("title").innerText = currentGame;
+
+data[currentGame]
+.filter(m =>
+m.name.toLowerCase().includes(search) ||
+m.category.toLowerCase().includes(search) ||
+currentGame.toLowerCase().includes(search)
+)
+.forEach(mod => {
+let div = document.createElement("div");
+div.className = "mod";
+
+div.innerHTML = `
+<b>${mod.name}</b><br>
+<span class="small">${mod.category} | ${mod.status}</span><br>
+<a href="${mod.link}" target="_blank">Link</a><br>
+<span class="small">${mod.notes}</span>
+`;
+
+modsDiv.appendChild(div);
+});
+
+save();
+}
+
+render();
+</script>
+
+</body>
+</html>
